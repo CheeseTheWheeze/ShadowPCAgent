@@ -1,0 +1,7 @@
+__pycache__/
+*.pyc
+.python-version
+.venv/
+dist/
+build/
+.shadowpcagent/

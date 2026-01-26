@@ -1,0 +1,6 @@
+{
+  "allowlist": ["git", "ls", "pwd"],
+  "max_files": 200,
+  "log_dir": ".shadowpcagent/logs",
+  "draft_dir": ".shadowpcagent/drafts"
+}
