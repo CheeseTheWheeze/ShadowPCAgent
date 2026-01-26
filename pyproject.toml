@@ -1,0 +1,18 @@
+[project]
+name = "shadowpcagent"
+version = "0.1.0"
+description = "Prototype autonomous coding + GUI interaction agent."
+readme = "README.md"
+requires-python = ">=3.9"
+license = { text = "MIT" }
+authors = [
+  { name = "ShadowPCAgent Contributors" }
+]
+dependencies = []
+
+[project.scripts]
+shadowpcagent = "shadowpcagent.cli:main"
+
+[tool.black]
+line-length = 88
+target-version = ["py39"]
