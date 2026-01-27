@@ -37,6 +37,16 @@ class PatchResult:
     path: str
     applied: bool
     error: Optional[str] = None
+    dry_run: bool = False
+    validated: bool = False
+
+
+@dataclass
+class RunHistoryEntry:
+    timestamp: str
+    task: str
+    status: str
+    summary_path: Optional[str] = None
 
 
 @dataclass
@@ -57,3 +67,5 @@ class RunSummary:
     edit_diff: Optional[str] = None
     applied_patch: Optional[PatchResult] = None
     applied_patch_path: Optional[str] = None
+    run_summary_path: Optional[str] = None
+    run_history_path: Optional[str] = None

@@ -1,0 +1,59 @@
+{
+  "status": "planned",
+  "task": "Plan only",
+  "plan": {
+    "task": "Plan only",
+    "steps": [
+      {
+        "title": "Analyze task",
+        "description": "Understand: Plan only"
+      },
+      {
+        "title": "Prepare",
+        "description": "Gather context and resources"
+      },
+      {
+        "title": "Execute",
+        "description": "Run executors for code/GUI work"
+      },
+      {
+        "title": "Report",
+        "description": "Summarize results and logs"
+      }
+    ]
+  },
+  "actions": [
+    {
+      "action": "Scan workspace",
+      "succeeded": true,
+      "detail": "Scanned 135 files under ."
+    }
+  ],
+  "safety_report": {
+    "requires_approval": false,
+    "reasons": [],
+    "draft_diff": ""
+  },
+  "files_scanned": 135,
+  "file_types": {
+    ".json": 2,
+    "<none>": 80,
+    ".md": 8,
+    ".toml": 1,
+    ".jsonl": 2,
+    ".py": 14,
+    ".pyc": 14,
+    ".sample": 14
+  },
+  "repo_root": ".",
+  "plan_only": true,
+  "shell_result": null,
+  "log_path": ".shadowpcagent/logs/run-20260127T093758Z.jsonl",
+  "draft_path": null,
+  "edit_path": null,
+  "edit_diff": null,
+  "applied_patch": null,
+  "applied_patch_path": null,
+  "run_summary_path": "artifacts/run-summary.json",
+  "run_history_path": "artifacts/run-history.jsonl"
+}

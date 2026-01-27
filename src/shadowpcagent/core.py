@@ -1,11 +1,14 @@
+import json
+from dataclasses import asdict
+from datetime import datetime
 from pathlib import Path
 
 from shadowpcagent.drafts import DraftManager
 from shadowpcagent.editor import EditRequest, FileEditor
 from shadowpcagent.executors import ShellExecutor
 from shadowpcagent.gui import GuiExecutor
-from shadowpcagent.logging_utils import JsonlLogger
-from shadowpcagent.models import ActionLog, Plan, PlanStep, RunSummary
+from shadowpcagent.logging_utils import JsonlLogger, RunHistoryLogger
+from shadowpcagent.models import ActionLog, Plan, PlanStep, RunHistoryEntry, RunSummary
 from shadowpcagent.patcher import UnifiedDiffApplier
 from shadowpcagent.safety import SafetyEngine
 from shadowpcagent.workspace import WorkspaceScanner
@@ -32,6 +35,7 @@ class Orchestrator:
         self.draft_manager = DraftManager(draft_dir=draft_dir)
         self.editor = FileEditor()
         self.patcher = UnifiedDiffApplier()
+        self.run_history = RunHistoryLogger(Path("artifacts") / "run-history.jsonl")
 
     def run(
         self,
@@ -44,6 +48,7 @@ class Orchestrator:
         max_files: int,
         plan_only: bool,
         apply_draft_path: Path | None,
+        dry_run_apply: bool,
     ) -> RunSummary:
         plan = self.planner.build_plan(task)
         report = self.safety_engine.classify(task=task, plan=plan)
@@ -114,16 +119,41 @@ class Orchestrator:
             if self.safety_engine.is_sensitive_path(applied_patch_path) and not approve_sensitive:
                 report.requires_approval = True
                 report.reasons.append(f"Sensitive patch detected: {applied_patch_path}")
+            if not approve_sensitive:
+                report.requires_approval = True
+                report.reasons.append("Patch apply requires explicit approval.")
             diff_text = Path(apply_draft_path).read_text(encoding="utf-8")
-            applied_patch = self.patcher.apply(diff_text, repo_root=repo_root)
+            validation_result = self.patcher.apply(diff_text, repo_root=repo_root, dry_run=True)
+            applied_patch = validation_result
+            self.logger.log("patch_validation", validation_result.__dict__)
             actions.append(
                 ActionLog(
-                    action="Apply draft patch",
-                    succeeded=applied_patch.applied,
-                    detail=applied_patch.error
-                    or f"Applied patch to {applied_patch.path}",
+                    action="Validate draft patch",
+                    succeeded=validation_result.validated,
+                    detail=validation_result.error
+                    or f"Validated patch for {validation_result.path}",
                 )
             )
+            if approve_sensitive and not dry_run_apply:
+                if validation_result.validated:
+                    apply_result = self.patcher.apply(diff_text, repo_root=repo_root, dry_run=False)
+                    applied_patch = apply_result
+                    actions.append(
+                        ActionLog(
+                            action="Apply draft patch",
+                            succeeded=apply_result.applied,
+                            detail=apply_result.error
+                            or f"Applied patch to {apply_result.path}",
+                        )
+                    )
+                else:
+                    actions.append(
+                        ActionLog(
+                            action="Apply draft patch",
+                            succeeded=False,
+                            detail="Validation failed; patch not applied.",
+                        )
+                    )
         if report.requires_approval and not approve_sensitive:
             summary = RunSummary(
                 status="approval_required",
@@ -142,8 +172,7 @@ class Orchestrator:
                 applied_patch=applied_patch,
                 applied_patch_path=applied_patch_path,
             )
-            self.logger.log_dataclass("run_summary", summary)
-            return summary
+            return self._finalize_summary(summary)
 
         if plan_only:
             summary = RunSummary(
@@ -161,8 +190,7 @@ class Orchestrator:
                 edit_path=edit_path,
                 edit_diff=edit_diff,
             )
-            self.logger.log_dataclass("run_summary", summary)
-            return summary
+            return self._finalize_summary(summary)
 
         gui_result = self.gui_executor.perform_action("Open application")
         actions.append(
@@ -202,5 +230,20 @@ class Orchestrator:
             applied_patch=applied_patch,
             applied_patch_path=applied_patch_path,
         )
+        return self._finalize_summary(summary)
+
+    def _finalize_summary(self, summary: RunSummary) -> RunSummary:
         self.logger.log_dataclass("run_summary", summary)
+        summary_path = Path("artifacts") / "run-summary.json"
+        summary_path.parent.mkdir(parents=True, exist_ok=True)
+        summary.run_history_path = str(self.run_history.history_path)
+        summary.run_summary_path = str(summary_path)
+        summary_path.write_text(json.dumps(asdict(summary), indent=2), encoding="utf-8")
+        history_entry = RunHistoryEntry(
+            timestamp=datetime.utcnow().isoformat() + "Z",
+            task=summary.task,
+            status=summary.status,
+            summary_path=summary.run_summary_path,
+        )
+        self.run_history.append(asdict(history_entry))
         return summary
