@@ -19,6 +19,11 @@ def build_parser() -> argparse.ArgumentParser:
         help="Task description for the agent to execute.",
     )
     parser.add_argument(
+        "--task-file",
+        default=None,
+        help="Path to a file containing the task description.",
+    )
+    parser.add_argument(
         "--approve-sensitive",
         action="store_true",
         help="Allow the prototype to proceed with sensitive tasks.",
@@ -121,8 +126,9 @@ def main(argv: Sequence[str] | None = None) -> int:
         log_dir=Path(args.log_dir),
         draft_dir=config.draft_dir,
     )
+    task = _load_task(args)
     summary = orchestrator.run(
-        task=args.task,
+        task=task,
         approve_sensitive=args.approve_sensitive,
         repo_root=Path(args.root),
         command=args.command,
@@ -152,6 +158,7 @@ def main(argv: Sequence[str] | None = None) -> int:
                 else None,
                 "applied_patch_path": summary.applied_patch_path,
                 "run_summary_path": summary.run_summary_path,
+                "run_history_path": summary.run_history_path,
             }
             print(json.dumps(payload, indent=2))
         else:
@@ -179,6 +186,7 @@ def main(argv: Sequence[str] | None = None) -> int:
             else None,
             "applied_patch_path": summary.applied_patch_path,
             "run_summary_path": summary.run_summary_path,
+            "run_history_path": summary.run_history_path,
             "shell": {
                 "command": summary.shell_result.command,
                 "returncode": summary.shell_result.returncode,
@@ -209,6 +217,13 @@ def _build_edit_request(args: argparse.Namespace) -> EditRequest | None:
         replace_text=args.replace,
         apply=args.apply,
     )
+
+
+def _load_task(args: argparse.Namespace) -> str:
+    if args.task_file is None:
+        return args.task
+    task_path = Path(args.task_file)
+    return task_path.read_text(encoding="utf-8").strip()
 
 
 if __name__ == "__main__":

@@ -23,3 +23,17 @@ class JsonlLogger:
 
     def log_dataclass(self, event: str, payload: Any) -> None:
         self.log(event, asdict(payload))
+
+
+class RunHistoryLogger:
+    def __init__(self, history_path: Path) -> None:
+        self.history_path = history_path
+        self.history_path.parent.mkdir(parents=True, exist_ok=True)
+
+    def append(self, payload: dict[str, Any]) -> None:
+        record = {
+            "timestamp": datetime.utcnow().isoformat() + "Z",
+            **payload,
+        }
+        with self.history_path.open("a", encoding="utf-8") as handle:
+            handle.write(json.dumps(record) + "\n")

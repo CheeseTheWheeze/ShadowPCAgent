@@ -1,13 +1,14 @@
 import json
 from dataclasses import asdict
+from datetime import datetime
 from pathlib import Path
 
 from shadowpcagent.drafts import DraftManager
 from shadowpcagent.editor import EditRequest, FileEditor
 from shadowpcagent.executors import ShellExecutor
 from shadowpcagent.gui import GuiExecutor
-from shadowpcagent.logging_utils import JsonlLogger
-from shadowpcagent.models import ActionLog, Plan, PlanStep, RunSummary
+from shadowpcagent.logging_utils import JsonlLogger, RunHistoryLogger
+from shadowpcagent.models import ActionLog, Plan, PlanStep, RunHistoryEntry, RunSummary
 from shadowpcagent.patcher import UnifiedDiffApplier
 from shadowpcagent.safety import SafetyEngine
 from shadowpcagent.workspace import WorkspaceScanner
@@ -34,6 +35,7 @@ class Orchestrator:
         self.draft_manager = DraftManager(draft_dir=draft_dir)
         self.editor = FileEditor()
         self.patcher = UnifiedDiffApplier()
+        self.run_history = RunHistoryLogger(Path("artifacts") / "run-history.jsonl")
 
     def run(
         self,
@@ -234,6 +236,14 @@ class Orchestrator:
         self.logger.log_dataclass("run_summary", summary)
         summary_path = Path("artifacts") / "run-summary.json"
         summary_path.parent.mkdir(parents=True, exist_ok=True)
+        summary.run_history_path = str(self.run_history.history_path)
         summary.run_summary_path = str(summary_path)
         summary_path.write_text(json.dumps(asdict(summary), indent=2), encoding="utf-8")
+        history_entry = RunHistoryEntry(
+            timestamp=datetime.utcnow().isoformat() + "Z",
+            task=summary.task,
+            status=summary.status,
+            summary_path=summary.run_summary_path,
+        )
+        self.run_history.append(asdict(history_entry))
         return summary

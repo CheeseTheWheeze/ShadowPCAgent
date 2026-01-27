@@ -26,7 +26,7 @@
     {
       "action": "Scan workspace",
       "succeeded": true,
-      "detail": "Scanned 126 files under ."
+      "detail": "Scanned 135 files under ."
     }
   ],
   "safety_report": {
@@ -34,13 +34,12 @@
     "reasons": [],
     "draft_diff": ""
   },
-  "files_scanned": 126,
+  "files_scanned": 135,
   "file_types": {
-    ".md": 8,
-    "<none>": 70,
     ".json": 2,
+    "<none>": 80,
+    ".md": 8,
     ".toml": 1,
-    ".patch": 1,
     ".jsonl": 2,
     ".py": 14,
     ".pyc": 14,
@@ -49,11 +48,12 @@
   "repo_root": ".",
   "plan_only": true,
   "shell_result": null,
-  "log_path": ".shadowpcagent/logs/run-20260127T081032Z.jsonl",
+  "log_path": ".shadowpcagent/logs/run-20260127T093758Z.jsonl",
   "draft_path": null,
   "edit_path": null,
   "edit_diff": null,
   "applied_patch": null,
   "applied_patch_path": null,
-  "run_summary_path": "artifacts/run-summary.json"
+  "run_summary_path": "artifacts/run-summary.json",
+  "run_history_path": "artifacts/run-history.jsonl"
 }

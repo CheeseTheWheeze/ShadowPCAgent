@@ -42,6 +42,14 @@ class PatchResult:
 
 
 @dataclass
+class RunHistoryEntry:
+    timestamp: str
+    task: str
+    status: str
+    summary_path: Optional[str] = None
+
+
+@dataclass
 class RunSummary:
     status: str
     task: str
@@ -60,3 +68,4 @@ class RunSummary:
     applied_patch: Optional[PatchResult] = None
     applied_patch_path: Optional[str] = None
     run_summary_path: Optional[str] = None
+    run_history_path: Optional[str] = None
