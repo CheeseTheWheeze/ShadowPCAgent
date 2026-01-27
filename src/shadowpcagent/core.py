@@ -6,6 +6,7 @@ from shadowpcagent.executors import ShellExecutor
 from shadowpcagent.gui import GuiExecutor
 from shadowpcagent.logging_utils import JsonlLogger
 from shadowpcagent.models import ActionLog, Plan, PlanStep, RunSummary
+from shadowpcagent.patcher import UnifiedDiffApplier
 from shadowpcagent.safety import SafetyEngine
 from shadowpcagent.workspace import WorkspaceScanner
 
@@ -30,6 +31,7 @@ class Orchestrator:
         self.logger = JsonlLogger(log_dir=log_dir)
         self.draft_manager = DraftManager(draft_dir=draft_dir)
         self.editor = FileEditor()
+        self.patcher = UnifiedDiffApplier()
 
     def run(
         self,
@@ -41,6 +43,7 @@ class Orchestrator:
         edit_request: EditRequest | None,
         max_files: int,
         plan_only: bool,
+        apply_draft_path: Path | None,
     ) -> RunSummary:
         plan = self.planner.build_plan(task)
         report = self.safety_engine.classify(task=task, plan=plan)
@@ -65,6 +68,8 @@ class Orchestrator:
         draft_path = None
         edit_diff = None
         edit_path = None
+        applied_patch = None
+        applied_patch_path = None
         if draft_note:
             draft = self.draft_manager.write_note(draft_note)
             draft_path = str(draft.path)
@@ -104,6 +109,21 @@ class Orchestrator:
                     or f"Edit {'applied' if edit_result.applied else 'drafted'} for {edit_path}",
                 )
             )
+        if apply_draft_path:
+            applied_patch_path = str(apply_draft_path)
+            if self.safety_engine.is_sensitive_path(applied_patch_path) and not approve_sensitive:
+                report.requires_approval = True
+                report.reasons.append(f"Sensitive patch detected: {applied_patch_path}")
+            diff_text = Path(apply_draft_path).read_text(encoding="utf-8")
+            applied_patch = self.patcher.apply(diff_text, repo_root=repo_root)
+            actions.append(
+                ActionLog(
+                    action="Apply draft patch",
+                    succeeded=applied_patch.applied,
+                    detail=applied_patch.error
+                    or f"Applied patch to {applied_patch.path}",
+                )
+            )
         if report.requires_approval and not approve_sensitive:
             summary = RunSummary(
                 status="approval_required",
@@ -119,6 +139,8 @@ class Orchestrator:
                 draft_path=draft_path,
                 edit_path=edit_path,
                 edit_diff=edit_diff,
+                applied_patch=applied_patch,
+                applied_patch_path=applied_patch_path,
             )
             self.logger.log_dataclass("run_summary", summary)
             return summary
@@ -177,6 +199,8 @@ class Orchestrator:
             draft_path=draft_path,
             edit_path=edit_path,
             edit_diff=edit_diff,
+            applied_patch=applied_patch,
+            applied_patch_path=applied_patch_path,
         )
         self.logger.log_dataclass("run_summary", summary)
         return summary

@@ -1,5 +1,5 @@
 from dataclasses import dataclass, field
-from typing import List, Optional, TYPE_CHECKING, Dict
+from typing import Dict, List, Optional, TYPE_CHECKING
 
 if TYPE_CHECKING:
     from shadowpcagent.safety import SafetyReport
@@ -33,6 +33,13 @@ class ShellResult:
 
 
 @dataclass
+class PatchResult:
+    path: str
+    applied: bool
+    error: Optional[str] = None
+
+
+@dataclass
 class RunSummary:
     status: str
     task: str
@@ -48,3 +55,5 @@ class RunSummary:
     draft_path: Optional[str] = None
     edit_path: Optional[str] = None
     edit_diff: Optional[str] = None
+    applied_patch: Optional[PatchResult] = None
+    applied_patch_path: Optional[str] = None

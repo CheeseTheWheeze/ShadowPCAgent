@@ -20,6 +20,7 @@ python -m shadowpcagent "List the repo status" --command "git status -sb"
 python -m shadowpcagent "Draft a note" --draft-note "Capture next steps"
 python -m shadowpcagent "Draft an edit" --edit-file README.md --find "ShadowPCAgent" --replace "ShadowPCAgent (Draft)" --json
 python -m shadowpcagent "Plan only" --plan-only --json
+python -m shadowpcagent "Apply draft" --apply-draft .shadowpcagent/drafts/draft-change-*.patch
 ```
 
 Notes:
@@ -29,6 +30,7 @@ Notes:
 - JSONL logs are written under `.shadowpcagent/logs`.
 - Edits default to draft-only; use `--apply` to write changes.
 - Use `--config` to load allowlist/max-files defaults from JSON.
+- Use `--apply-draft` to apply a generated draft patch.
 
 ## Repository map
 
