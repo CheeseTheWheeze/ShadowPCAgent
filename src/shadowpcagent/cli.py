@@ -3,7 +3,9 @@ import json
 from pathlib import Path
 from typing import Sequence
 
+from shadowpcagent.config import load_config, merge_allowlist
 from shadowpcagent.core import Orchestrator
+from shadowpcagent.editor import EditRequest
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -22,6 +24,12 @@ def build_parser() -> argparse.ArgumentParser:
         help="Allow the prototype to proceed with sensitive tasks.",
     )
     parser.add_argument(
+        "--allow",
+        action="append",
+        default=[],
+        help="Allowlist command (repeatable). Defaults to git, ls, pwd.",
+    )
+    parser.add_argument(
         "--root",
         default=".",
         help="Root directory to scan for the demo run.",
@@ -30,6 +38,52 @@ def build_parser() -> argparse.ArgumentParser:
         "--command",
         default="git status -sb",
         help="Allowlisted shell command to execute as part of the run.",
+    )
+    parser.add_argument(
+        "--config",
+        default=None,
+        help="Path to a JSON config file.",
+    )
+    parser.add_argument(
+        "--max-files",
+        type=int,
+        default=None,
+        help="Maximum files to scan in the workspace.",
+    )
+    parser.add_argument(
+        "--edit-file",
+        default=None,
+        help="Path to a file to edit (requires --find and --replace).",
+    )
+    parser.add_argument(
+        "--find",
+        default=None,
+        help="Text to find in the target file.",
+    )
+    parser.add_argument(
+        "--replace",
+        default=None,
+        help="Replacement text for the target file.",
+    )
+    parser.add_argument(
+        "--apply",
+        action="store_true",
+        help="Apply the edit instead of drafting a diff only.",
+    )
+    parser.add_argument(
+        "--log-dir",
+        default=".shadowpcagent/logs",
+        help="Directory for JSONL run logs.",
+    )
+    parser.add_argument(
+        "--draft-note",
+        default=None,
+        help="Write a draft note patch (stored under .shadowpcagent/drafts).",
+    )
+    parser.add_argument(
+        "--plan-only",
+        action="store_true",
+        help="Generate a plan and summary without executing shell or GUI actions.",
     )
     parser.add_argument(
         "--json",
@@ -43,12 +97,29 @@ def main(argv: Sequence[str] | None = None) -> int:
     parser = build_parser()
     args = parser.parse_args(argv)
 
-    orchestrator = Orchestrator()
+    config = load_config(Path(args.config)) if args.config else load_config(None)
+    if args.max_files is not None:
+        config = config.__class__(
+            allowlist=config.allowlist,
+            max_files=args.max_files,
+            log_dir=config.log_dir,
+            draft_dir=config.draft_dir,
+        )
+    config = merge_allowlist(config, args.allow)
+    orchestrator = Orchestrator(
+        allowlist=config.allowlist,
+        log_dir=Path(args.log_dir),
+        draft_dir=config.draft_dir,
+    )
     summary = orchestrator.run(
         task=args.task,
         approve_sensitive=args.approve_sensitive,
         repo_root=Path(args.root),
         command=args.command,
+        draft_note=args.draft_note,
+        edit_request=_build_edit_request(args),
+        max_files=config.max_files,
+        plan_only=args.plan_only,
     )
 
     if summary.status == "approval_required":
@@ -58,6 +129,12 @@ def main(argv: Sequence[str] | None = None) -> int:
                 "reasons": summary.safety_report.reasons,
                 "draft_diff": summary.safety_report.draft_diff,
                 "files_scanned": summary.files_scanned,
+                "file_types": summary.file_types,
+                "log_path": summary.log_path,
+                "draft_path": summary.draft_path,
+                "edit_path": summary.edit_path,
+                "edit_diff": summary.edit_diff,
+                "plan_only": summary.plan_only,
             }
             print(json.dumps(payload, indent=2))
         else:
@@ -73,7 +150,13 @@ def main(argv: Sequence[str] | None = None) -> int:
             "status": summary.status,
             "reasons": summary.safety_report.reasons,
             "files_scanned": summary.files_scanned,
+            "file_types": summary.file_types,
             "repo_root": summary.repo_root,
+            "log_path": summary.log_path,
+            "draft_path": summary.draft_path,
+            "edit_path": summary.edit_path,
+            "edit_diff": summary.edit_diff,
+            "plan_only": summary.plan_only,
             "shell": {
                 "command": summary.shell_result.command,
                 "returncode": summary.shell_result.returncode,
@@ -91,6 +174,19 @@ def main(argv: Sequence[str] | None = None) -> int:
         if summary.shell_result:
             print(f"Command output:\n{summary.shell_result.stdout}")
     return 0
+
+
+def _build_edit_request(args: argparse.Namespace) -> EditRequest | None:
+    if args.edit_file is None:
+        return None
+    if args.find is None or args.replace is None:
+        raise ValueError("--edit-file requires --find and --replace.")
+    return EditRequest(
+        path=Path(args.edit_file),
+        find_text=args.find,
+        replace_text=args.replace,
+        apply=args.apply,
+    )
 
 
 if __name__ == "__main__":

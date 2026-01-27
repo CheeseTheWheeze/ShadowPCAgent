@@ -1,5 +1,5 @@
 from dataclasses import dataclass, field
-from typing import List, Optional, TYPE_CHECKING
+from typing import List, Optional, TYPE_CHECKING, Dict
 
 if TYPE_CHECKING:
     from shadowpcagent.safety import SafetyReport
@@ -40,5 +40,11 @@ class RunSummary:
     actions: List[ActionLog]
     safety_report: "SafetyReport"
     files_scanned: int
+    file_types: Dict[str, int]
     repo_root: str
+    plan_only: bool
     shell_result: Optional[ShellResult] = None
+    log_path: Optional[str] = None
+    draft_path: Optional[str] = None
+    edit_path: Optional[str] = None
+    edit_diff: Optional[str] = None

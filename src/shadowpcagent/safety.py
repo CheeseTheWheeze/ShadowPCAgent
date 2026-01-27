@@ -16,6 +16,16 @@ SENSITIVE_KEYWORDS = {
     "policy",
 }
 
+SENSITIVE_PATH_PARTS = {
+    ".env",
+    "secrets",
+    "credentials",
+    "production",
+    "deploy",
+    "auth",
+    "token",
+}
+
 
 @dataclass
 class SafetyReport:
@@ -34,6 +44,10 @@ class SafetyEngine:
             reasons=reasons,
             draft_diff=draft_diff,
         )
+
+    def is_sensitive_path(self, path: str) -> bool:
+        lowered = path.lower()
+        return any(part in lowered for part in SENSITIVE_PATH_PARTS)
 
     def _match_keywords(self, task: str) -> list[str]:
         tokens = {token.strip(".,").lower() for token in task.split()}

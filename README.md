@@ -17,12 +17,18 @@ python -m shadowpcagent "Summarize the repo status"
 python -m shadowpcagent "Update production credentials" --json
 python -m shadowpcagent "Update production credentials" --approve-sensitive
 python -m shadowpcagent "List the repo status" --command "git status -sb"
+python -m shadowpcagent "Draft a note" --draft-note "Capture next steps"
+python -m shadowpcagent "Draft an edit" --edit-file README.md --find "ShadowPCAgent" --replace "ShadowPCAgent (Draft)" --json
+python -m shadowpcagent "Plan only" --plan-only --json
 ```
 
 Notes:
 
 - GUI interactions are currently simulated (no real screen capture yet).
 - Shell commands are allowlisted (default: `git`, `ls`, `pwd`).
+- JSONL logs are written under `.shadowpcagent/logs`.
+- Edits default to draft-only; use `--apply` to write changes.
+- Use `--config` to load allowlist/max-files defaults from JSON.
 
 ## Repository map
 
