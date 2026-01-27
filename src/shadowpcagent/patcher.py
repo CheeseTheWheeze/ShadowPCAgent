@@ -15,27 +15,59 @@ class Hunk:
 
 
 class UnifiedDiffApplier:
-    def apply(self, diff_text: str, repo_root: Path) -> PatchResult:
+    def apply(self, diff_text: str, repo_root: Path, dry_run: bool = False) -> PatchResult:
         target_path = self._extract_target_path(diff_text)
         if target_path is None:
-            return PatchResult(path="", applied=False, error="No target path found in diff.")
+            return PatchResult(
+                path="",
+                applied=False,
+                error="No target path found in diff.",
+                dry_run=dry_run,
+                validated=False,
+            )
         path = (repo_root / target_path).resolve()
         if not path.exists():
             return PatchResult(
                 path=str(path),
                 applied=False,
                 error="Target file does not exist.",
+                dry_run=dry_run,
+                validated=False,
             )
         hunks = self._parse_hunks(diff_text)
         if not hunks:
-            return PatchResult(path=str(path), applied=False, error="No hunks found.")
+            return PatchResult(
+                path=str(path),
+                applied=False,
+                error="No hunks found.",
+                dry_run=dry_run,
+                validated=False,
+            )
         original_lines = path.read_text(encoding="utf-8").splitlines()
         try:
             updated_lines = self._apply_hunks(original_lines, hunks)
         except ValueError as exc:
-            return PatchResult(path=str(path), applied=False, error=str(exc))
+            return PatchResult(
+                path=str(path),
+                applied=False,
+                error=str(exc),
+                dry_run=dry_run,
+                validated=False,
+            )
+        if dry_run:
+            return PatchResult(
+                path=str(path),
+                applied=False,
+                dry_run=True,
+                validated=True,
+            )
         path.write_text("\n".join(updated_lines) + "\n", encoding="utf-8")
-        return PatchResult(path=str(path), applied=True)
+        return PatchResult(
+            path=str(path),
+            applied=True,
+            dry_run=False,
+            validated=True,
+        )
 
     def _extract_target_path(self, diff_text: str) -> Optional[str]:
         for line in diff_text.splitlines():

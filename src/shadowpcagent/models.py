@@ -37,6 +37,8 @@ class PatchResult:
     path: str
     applied: bool
     error: Optional[str] = None
+    dry_run: bool = False
+    validated: bool = False
 
 
 @dataclass
@@ -57,3 +59,4 @@ class RunSummary:
     edit_diff: Optional[str] = None
     applied_patch: Optional[PatchResult] = None
     applied_patch_path: Optional[str] = None
+    run_summary_path: Optional[str] = None
