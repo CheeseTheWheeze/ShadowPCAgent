@@ -10,9 +10,16 @@ authors = [
 ]
 dependencies = []
 
+[project.optional-dependencies]
+dev = ["pytest"]
+
 [project.scripts]
 shadowpcagent = "shadowpcagent.cli:main"
 
 [tool.black]
 line-length = 88
 target-version = ["py39"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-ra"
