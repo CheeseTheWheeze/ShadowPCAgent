@@ -56,3 +56,54 @@ This is a **first draft**. Expect revisions once:
 - security boundaries are clarified,
 - performance targets are set,
 - implementation constraints are confirmed.
+
+## Testing
+
+Install development dependencies:
+
+```bash
+python -m pip install -e .[dev]
+```
+
+Run the test suite (one command):
+
+```bash
+python -m pytest
+```
+
+PowerShell quick copy/paste:
+
+```powershell
+python -m pip install -e .[dev]; python -m pytest
+```
+
+## Windows quickstart (download, run, push)
+
+### Download / clone
+
+```powershell
+git clone https://github.com/<your-org>/ShadowPCAgent.git
+cd ShadowPCAgent
+```
+
+### Install + run
+
+```powershell
+python -m pip install -e .[dev]
+python -m shadowpcagent "Summarize the repo status"
+```
+
+### Run tests
+
+```powershell
+python -m pytest
+```
+
+### Push changes
+
+```powershell
+git status -sb
+git add .
+git commit -m "Your message"
+git push -u origin <your-branch>
+```
