@@ -56,3 +56,67 @@ This is a **first draft**. Expect revisions once:
 - security boundaries are clarified,
 - performance targets are set,
 - implementation constraints are confirmed.
+
+## Testing
+
+Install development dependencies:
+
+```bash
+python -m pip install -e .[dev]
+```
+
+Run the test suite (one command):
+
+```bash
+python -m pytest
+```
+
+PowerShell quick copy/paste:
+
+```powershell
+python -m pip install -e .[dev]; python -m pytest
+```
+
+## Windows quickstart (download, run, push)
+
+### Download / clone
+
+```powershell
+git clone https://github.com/<your-org>/ShadowPCAgent.git
+cd ShadowPCAgent
+
+# Confirm you're in the repo (should show README.md, pyproject.toml, src/, etc.)
+Get-ChildItem
+```
+
+### Install + run (from the repo root)
+
+```powershell
+python -m pip install -e .[dev]
+python -m shadowpcagent "Summarize the repo status"
+```
+
+### Run tests (from the repo root)
+
+```powershell
+python -m pytest
+```
+
+If you see errors like "does not appear to be a Python project" or
+"No module named pytest", you're likely in the wrong folder. Run:
+
+```powershell
+Get-Location
+Get-ChildItem
+```
+
+Then `cd` back into the repo (the folder that contains `pyproject.toml`).
+
+### Push changes
+
+```powershell
+git status -sb
+git add .
+git commit -m "Your message"
+git push -u origin <your-branch>
+```
