@@ -6,6 +6,7 @@ from typing import Sequence
 from shadowpcagent.config import load_config, merge_allowlist
 from shadowpcagent.core import Orchestrator
 from shadowpcagent.editor import EditRequest
+from shadowpcagent.powershell import build_inventory_and_dedupe_script
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -105,12 +106,21 @@ def build_parser() -> argparse.ArgumentParser:
         action="store_true",
         help="Output a JSON summary.",
     )
+    parser.add_argument(
+        "--emit-powershell-cleanup-script",
+        action="store_true",
+        help="Print a PowerShell inventory/dedup script and exit.",
+    )
     return parser
 
 
 def main(argv: Sequence[str] | None = None) -> int:
     parser = build_parser()
     args = parser.parse_args(argv)
+
+    if args.emit_powershell_cleanup_script:
+        print(build_inventory_and_dedupe_script())
+        return 0
 
     config = load_config(Path(args.config)) if args.config else load_config(None)
     if args.max_files is not None:
