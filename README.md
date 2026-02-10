@@ -90,6 +90,9 @@ Get-ChildItem
 ```
 
 ### Install + run (from the repo root)
+```
+
+### Install + run
 
 ```powershell
 python -m pip install -e .[dev]
@@ -97,6 +100,7 @@ python -m shadowpcagent "Summarize the repo status"
 ```
 
 ### Run tests (from the repo root)
+### Run tests
 
 ```powershell
 python -m pytest
