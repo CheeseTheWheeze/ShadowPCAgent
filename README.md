@@ -84,6 +84,12 @@ python -m pip install -e .[dev]; python -m pytest
 ```powershell
 git clone https://github.com/<your-org>/ShadowPCAgent.git
 cd ShadowPCAgent
+
+# Confirm you're in the repo (should show README.md, pyproject.toml, src/, etc.)
+Get-ChildItem
+```
+
+### Install + run (from the repo root)
 ```
 
 ### Install + run
@@ -93,11 +99,22 @@ python -m pip install -e .[dev]
 python -m shadowpcagent "Summarize the repo status"
 ```
 
+### Run tests (from the repo root)
 ### Run tests
 
 ```powershell
 python -m pytest
 ```
+
+If you see errors like "does not appear to be a Python project" or
+"No module named pytest", you're likely in the wrong folder. Run:
+
+```powershell
+Get-Location
+Get-ChildItem
+```
+
+Then `cd` back into the repo (the folder that contains `pyproject.toml`).
 
 ### Push changes
 
