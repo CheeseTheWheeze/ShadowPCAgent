@@ -90,9 +90,6 @@ Get-ChildItem
 ```
 
 ### Install + run (from the repo root)
-```
-
-### Install + run
 
 ```powershell
 python -m pip install -e .[dev]
@@ -100,11 +97,28 @@ python -m shadowpcagent "Summarize the repo status"
 ```
 
 ### Run tests (from the repo root)
-### Run tests
 
 ```powershell
 python -m pytest
 ```
+
+### Generate a PowerShell cleanup helper script
+
+This prints a ready-to-run PowerShell script that inventories files,
+finds duplicate-content candidates by SHA256 hash, and writes reports.
+It is dry-run by default and only moves files if run with `-Apply`.
+
+```powershell
+python -m shadowpcagent --emit-powershell-cleanup-script > .\Run-InventoryAndDedupe.ps1
+powershell -ExecutionPolicy Bypass -File .\Run-InventoryAndDedupe.ps1
+```
+
+To apply candidate moves after reviewing reports:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\Run-InventoryAndDedupe.ps1 -Apply
+```
+
 
 If you see errors like "does not appear to be a Python project" or
 "No module named pytest", you're likely in the wrong folder. Run:
