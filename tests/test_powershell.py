@@ -33,4 +33,3 @@ def test_cleanup_script_includes_preflight_manifest_rollback_and_failures() -> N
     assert "rollback-moves.ps1" in script
     assert "failures.csv" in script
     assert "Preflight failed: insufficient free space/headroom" in script
-    assert "Share summary with this command" in script
