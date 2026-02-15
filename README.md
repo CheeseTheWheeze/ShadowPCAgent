@@ -56,3 +56,98 @@ This is a **first draft**. Expect revisions once:
 - security boundaries are clarified,
 - performance targets are set,
 - implementation constraints are confirmed.
+
+## Testing
+
+Install development dependencies:
+
+```bash
+python -m pip install -e .[dev]
+```
+
+Run the test suite (one command):
+
+```bash
+python -m pytest
+```
+
+PowerShell quick copy/paste:
+
+```powershell
+python -m pip install -e .[dev]; python -m pytest
+```
+
+## Windows quickstart (download, run, push)
+
+### Download / clone
+
+```powershell
+git clone https://github.com/<your-org>/ShadowPCAgent.git
+cd ShadowPCAgent
+
+# Confirm you're in the repo (should show README.md, pyproject.toml, src/, etc.)
+Get-ChildItem
+```
+
+### Install + run (from the repo root)
+
+```powershell
+python -m pip install -e .[dev]
+python -m shadowpcagent "Summarize the repo status"
+```
+
+### Run tests (from the repo root)
+
+```powershell
+python -m pytest
+```
+
+### Generate a PowerShell cleanup helper script
+
+This prints a ready-to-run PowerShell script that inventories files,
+finds duplicate-content candidates by SHA256 hash, and writes reports.
+It is dry-run by default and only moves files if run with `-Apply`.
+
+```powershell
+python -m shadowpcagent --emit-powershell-cleanup-script > .\Run-InventoryAndDedupe.ps1
+powershell -ExecutionPolicy Bypass -File .\Run-InventoryAndDedupe.ps1 -ScanRoot "$HOME"
+```
+
+Recommended options:
+
+```powershell
+# Limit scope for faster iteration
+powershell -ExecutionPolicy Bypass -File .\Run-InventoryAndDedupe.ps1 -ScanRoot "D:\" -MaxFiles 50000
+
+# Add extra excludes (default excludes already skip Windows/Program Files/cache paths)
+powershell -ExecutionPolicy Bypass -File .\Run-InventoryAndDedupe.ps1 -ScanRoot "$HOME" -ExcludePath "\OneDrive\", "\AppData\Local\Temp\"
+
+# Emit periodic progress every 2000 files
+powershell -ExecutionPolicy Bypass -File .\Run-InventoryAndDedupe.ps1 -ScanRoot "$HOME" -ProgressEvery 2000
+```
+
+To apply candidate moves after reviewing reports:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\Run-InventoryAndDedupe.ps1 -ScanRoot "$HOME" -Apply
+```
+
+
+If you see errors like "does not appear to be a Python project" or
+"No module named pytest", you're likely in the wrong folder. Run:
+
+```powershell
+Get-Location
+Get-ChildItem
+```
+
+Then `cd` back into the repo (the folder that contains `pyproject.toml`).
+
+### Push changes
+
+```powershell
+git status -sb
+git add .
+git commit -m "Your message"
+git push -u origin <your-branch>
+```
