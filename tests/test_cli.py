@@ -40,3 +40,11 @@ def test_build_edit_request_with_apply() -> None:
     assert request.find_text == "ShadowPCAgent"
     assert request.replace_text == "ShadowPCAgent (Draft)"
     assert request.apply is True
+
+
+def test_emit_powershell_cleanup_script(capsys: pytest.CaptureFixture[str]) -> None:
+    rc = cli.main(["--emit-powershell-cleanup-script"])
+    captured = capsys.readouterr()
+    assert rc == 0
+    assert "function Should-ExcludePath" in captured.out
+    assert "[int]$MaxFiles = 0" in captured.out
