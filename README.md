@@ -105,19 +105,71 @@ python -m pytest
 ### Generate a PowerShell cleanup helper script
 
 This prints a ready-to-run PowerShell script that inventories files,
-finds duplicate-content candidates by SHA256 hash, and writes reports.
+finds duplicate-content candidates by SHA256 hash, and writes sorted reports.
 It is dry-run by default and only moves files if run with `-Apply`.
+It also supports metadata pre-filtering, include/exclude filtering, incremental cache reuse,
+optional PowerShell 7 parallel hashing, retry/failure logs, and rollback manifest generation
+during apply mode.
 
 ```powershell
 python -m shadowpcagent --emit-powershell-cleanup-script > .\Run-InventoryAndDedupe.ps1
-powershell -ExecutionPolicy Bypass -File .\Run-InventoryAndDedupe.ps1
 ```
 
-To apply candidate moves after reviewing reports:
+Practical, scoped dry-run on your home directory:
 
 ```powershell
-powershell -ExecutionPolicy Bypass -File .\Run-InventoryAndDedupe.ps1 -Apply
+powershell -ExecutionPolicy Bypass -File .\Run-InventoryAndDedupe.ps1 `
+  -ScanRoot "$HOME" `
+  -MaxFiles 25000 `
+  -ProgressEvery 500 `
+  -HashConcurrency 1 `
+  -IncludeExtension @(".pdf", ".docx", ".zip", ".mp4") `
+  -ExcludePath @("$HOME\.gradle", "$HOME\AppData\Local\Temp") `
+  -ExcludeGlob @("*/node_modules/*", "*/.git/*") `
+  -HashRetryCount 2 `
+  -HashRetryDelayMs 250
 ```
+
+Target a secondary drive with bounded iteration:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\Run-InventoryAndDedupe.ps1 `
+  -ScanRoot "D:\" `
+  -MaxFiles 100000 `
+  -ProgressEvery 1000 `
+  -HashConcurrency 4 `
+  -IncludeGlob @("*/Downloads/*", "*/Videos/*")
+```
+
+Apply mode (after report review):
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\Run-InventoryAndDedupe.ps1 `
+  -ScanRoot "$HOME" `
+  -MaxFiles 25000 `
+  -Apply `
+  -RequirePreflightHeadroomGB 2
+
+# Preview only (manifest without moving):
+# powershell -ExecutionPolicy Bypass -File .\Run-InventoryAndDedupe.ps1 -ScanRoot "$HOME" -Apply -WhatIfApply
+
+# If needed after apply:
+# powershell -ExecutionPolicy Bypass -File "$HOME\ShadowPCAgent-Reports\run-<timestamp>\rollback-moves.ps1"
+```
+
+Generated reports include:
+- `inventory.csv`
+- `inventory-by-size.csv`
+- `inventory-by-extension.csv`
+- `file-hashes.csv`
+- `duplicate-candidates.csv`
+- `selection-stats.txt`
+- `hash-candidates.csv`
+- `cache-stats.txt`
+- `failures.csv` (when retries still fail)
+- `apply-preflight.txt` (apply mode)
+- `move-manifest.csv` (apply mode)
+- `rollback-moves.ps1` (apply mode)
 
 
 If you see errors like "does not appear to be a Python project" or
