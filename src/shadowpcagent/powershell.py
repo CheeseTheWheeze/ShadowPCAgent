@@ -527,6 +527,7 @@ $dupeCandidates |
 
 Write-Host "==> Duplicate candidates: $($dupeCandidates.Count)"
 Write-Host "==> Report: $runDir"
+Write-Host "==> Share summary with this command: Get-Content -Path (Join-Path '$runDir' 'selection-stats.txt'); Get-Content -Path (Join-Path '$runDir' 'cache-stats.txt'); if (Test-Path (Join-Path '$runDir' 'failures.csv')) { Import-Csv (Join-Path '$runDir' 'failures.csv') | Group-Object ExceptionType | Sort-Object Count -Descending | Select-Object -First 10 }"
 
 if (-not $Apply) {
   Write-Host "Dry run only. Re-run with -Apply to move duplicate candidates into: $archiveDir"
