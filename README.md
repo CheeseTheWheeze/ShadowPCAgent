@@ -110,12 +110,27 @@ It is dry-run by default and only moves files if run with `-Apply`.
 
 ```powershell
 python -m shadowpcagent --emit-powershell-cleanup-script > .\Run-InventoryAndDedupe.ps1
+powershell -ExecutionPolicy Bypass -File .\Run-InventoryAndDedupe.ps1 -ScanRoot "$HOME"
+```
+
+Recommended options:
+
+```powershell
+# Limit scope for faster iteration
+powershell -ExecutionPolicy Bypass -File .\Run-InventoryAndDedupe.ps1 -ScanRoot "D:\" -MaxFiles 50000
+
+# Add extra excludes (default excludes already skip Windows/Program Files/cache paths)
+powershell -ExecutionPolicy Bypass -File .\Run-InventoryAndDedupe.ps1 -ScanRoot "$HOME" -ExcludePath "\OneDrive\", "\AppData\Local\Temp\"
+
+# Emit periodic progress every 2000 files
+powershell -ExecutionPolicy Bypass -File .\Run-InventoryAndDedupe.ps1 -ScanRoot "$HOME" -ProgressEvery 2000
 powershell -ExecutionPolicy Bypass -File .\Run-InventoryAndDedupe.ps1
 ```
 
 To apply candidate moves after reviewing reports:
 
 ```powershell
+powershell -ExecutionPolicy Bypass -File .\Run-InventoryAndDedupe.ps1 -ScanRoot "$HOME" -Apply
 powershell -ExecutionPolicy Bypass -File .\Run-InventoryAndDedupe.ps1 -Apply
 ```
 
