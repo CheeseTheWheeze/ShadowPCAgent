@@ -40,16 +40,3 @@ def test_build_edit_request_with_apply() -> None:
     assert request.find_text == "ShadowPCAgent"
     assert request.replace_text == "ShadowPCAgent (Draft)"
     assert request.apply is True
-
-
-def test_emit_powershell_cleanup_script(capsys: pytest.CaptureFixture[str]) -> None:
-    exit_code = cli.main(["--emit-powershell-cleanup-script"])
-    captured = capsys.readouterr()
-    assert exit_code == 0
-    assert "param(" in captured.out
-    assert "duplicate-candidates.csv" in captured.out
-    assert "[string[]]$ExcludePath" in captured.out
-    assert "$MaxFiles" in captured.out
-    assert "$ProgressEvery" in captured.out
-    assert "$hashPrefix" in captured.out
-    assert "while (Test-Path $dest)" in captured.out

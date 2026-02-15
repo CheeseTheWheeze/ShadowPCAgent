@@ -124,12 +124,14 @@ powershell -ExecutionPolicy Bypass -File .\Run-InventoryAndDedupe.ps1 -ScanRoot 
 
 # Emit periodic progress every 2000 files
 powershell -ExecutionPolicy Bypass -File .\Run-InventoryAndDedupe.ps1 -ScanRoot "$HOME" -ProgressEvery 2000
+powershell -ExecutionPolicy Bypass -File .\Run-InventoryAndDedupe.ps1
 ```
 
 To apply candidate moves after reviewing reports:
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File .\Run-InventoryAndDedupe.ps1 -ScanRoot "$HOME" -Apply
+powershell -ExecutionPolicy Bypass -File .\Run-InventoryAndDedupe.ps1 -Apply
 ```
 
 

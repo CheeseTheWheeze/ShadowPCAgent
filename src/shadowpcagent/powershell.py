@@ -11,44 +11,10 @@ def build_inventory_and_dedupe_script() -> str:
     return r'''param(
   [string]$ScanRoot = "$HOME",
   [string]$ReportRoot = "$HOME/ShadowPCAgent-Reports",
-  [string[]]$ExcludePath = @(),
-  [int]$MaxFiles = 0,
-  [int]$ProgressEvery = 1000,
   [switch]$Apply
 )
 
 $ErrorActionPreference = "Stop"
-
-$defaultExcludeFragments = @(
-  "\\.git\\",
-  "\\node_modules\\",
-  "\\venv\\",
-  "\\.venv\\",
-  "\\__pycache__\\",
-  "\\Windows\\",
-  "\\Program Files\\",
-  "\\Program Files (x86)\\",
-  "\\ProgramData\\",
-  "\\$Recycle.Bin\\",
-  "\\System Volume Information\\",
-  "\\ShadowPCAgent-Reports\\",
-  "\\.gradle\\"
-)
-
-$excludeMatchers = @()
-$excludeMatchers += $defaultExcludeFragments
-$excludeMatchers += ($ExcludePath | Where-Object { $_ -and $_.Trim() -ne "" })
-
-function Should-ExcludePath {
-  param([string]$Path)
-
-  foreach ($fragment in $excludeMatchers) {
-    if ($Path -like "*$fragment*") {
-      return $true
-    }
-  }
-  return $false
-}
 
 Write-Host "==> Scan root: $ScanRoot"
 Write-Host "==> Report root: $ReportRoot"
@@ -64,35 +30,25 @@ New-Item -ItemType Directory -Path $runDir -Force | Out-Null
 New-Item -ItemType Directory -Path $archiveDir -Force | Out-Null
 
 Write-Host "==> Gathering files"
-$allFiles = Get-ChildItem -Path $ScanRoot -File -Recurse -ErrorAction SilentlyContinue
-$files = $allFiles | Where-Object { -not (Should-ExcludePath -Path $_.FullName) }
-if ($MaxFiles -gt 0) {
-  $files = $files | Select-Object -First $MaxFiles
-}
+$files = Get-ChildItem -Path $ScanRoot -File -Recurse -ErrorAction SilentlyContinue |
+  Where-Object { $_.FullName -notmatch "\\\.git\\|\\node_modules\\|\\venv\\|\\\.venv\\|\\__pycache__\\" }
 
 $inventory = $files | Select-Object FullName, Length, Extension, LastWriteTime
 $inventoryPath = Join-Path $runDir "inventory.csv"
 $inventory | Export-Csv -NoTypeInformation -Path $inventoryPath
 
 Write-Host "==> Hashing files (can take time)"
-$hashRows = New-Object System.Collections.Generic.List[object]
-$processed = 0
-foreach ($f in $files) {
+$hashRows = foreach ($f in $files) {
   try {
     $h = Get-FileHash -Algorithm SHA256 -Path $f.FullName
-    $hashRows.Add([PSCustomObject]@{
+    [PSCustomObject]@{
       FullName = $f.FullName
       Length = $f.Length
       Extension = $f.Extension
       Hash = $h.Hash
-    }) | Out-Null
+    }
   } catch {
     Write-Warning "Failed to hash: $($f.FullName)"
-  }
-
-  $processed++
-  if ($ProgressEvery -gt 0 -and ($processed % $ProgressEvery -eq 0)) {
-    Write-Host "==> Progress: hashed $processed files"
   }
 }
 
@@ -132,16 +88,8 @@ foreach ($row in $dupeCandidates) {
   $src = $row.Candidate
   if (-not (Test-Path $src)) { continue }
 
-  $hashPrefix = if ($row.Hash.Length -ge 12) { $row.Hash.Substring(0, 12) } else { $row.Hash }
   $safeName = ($src -replace "[:\\/]", "_")
-  $baseName = "$hashPrefix`_$safeName"
-  $dest = Join-Path $archiveDir $baseName
-  $suffix = 1
-  while (Test-Path $dest) {
-    $dest = Join-Path $archiveDir ("{0}_{1}" -f $baseName, $suffix)
-    $suffix++
-  }
-
+  $dest = Join-Path $archiveDir $safeName
   Move-Item -Path $src -Destination $dest -Force
 }
 
