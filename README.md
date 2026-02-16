@@ -171,17 +171,6 @@ Generated reports include:
 - `move-manifest.csv` (apply mode)
 - `rollback-moves.ps1` (apply mode)
 
-When a run finishes, paste this output so we can tune quickly:
-
-```powershell
-$run = Get-ChildItem "$HOME\ShadowPCAgent-Reports" -Directory | Sort-Object LastWriteTime -Descending | Select-Object -First 1
-Write-Host "RUN:" $run.FullName
-Get-Content (Join-Path $run.FullName "selection-stats.txt")
-Get-Content (Join-Path $run.FullName "cache-stats.txt")
-if (Test-Path (Join-Path $run.FullName "failures.csv")) {
-  Import-Csv (Join-Path $run.FullName "failures.csv") | Group-Object ExceptionType | Sort-Object Count -Descending | Select-Object -First 10
-}
-```
 
 If you see errors like "does not appear to be a Python project" or
 "No module named pytest", you're likely in the wrong folder. Run:

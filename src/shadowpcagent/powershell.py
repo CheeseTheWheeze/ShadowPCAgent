@@ -289,12 +289,12 @@ $inventoryPath = Join-Path $runDir "inventory.csv"
 $inventory | Export-Csv -NoTypeInformation -Path $inventoryPath
 
 $inventoryBySizePath = Join-Path $runDir "inventory-by-size.csv"
-$inventory | Sort-Object -Property Length, FullName -Descending | Export-Csv -NoTypeInformation -Path $inventoryBySizePath
+$inventory | Sort-Object Length -Descending, FullName | Export-Csv -NoTypeInformation -Path $inventoryBySizePath
 
 $inventoryByExtPath = Join-Path $runDir "inventory-by-extension.csv"
 $inventory |
   Group-Object Extension |
-  Sort-Object -Property Count, Name -Descending |
+  Sort-Object Count -Descending, Name |
   Select-Object Name, Count |
   Export-Csv -NoTypeInformation -Path $inventoryByExtPath
 
@@ -522,7 +522,7 @@ $dupeCandidates = foreach ($group in $dupes) {
 
 $dupePath = Join-Path $runDir "duplicate-candidates.csv"
 $dupeCandidates |
-  Sort-Object -Property Length, Hash, Candidate -Descending |
+  Sort-Object Length -Descending, Hash, Candidate |
   Export-Csv -NoTypeInformation -Path $dupePath
 
 Write-Host "==> Duplicate candidates: $($dupeCandidates.Count)"
@@ -663,6 +663,5 @@ Write-Host "Preflight report: $preflightPath"
 if ($failureRows.Count -gt 0) {
   Write-Host "Failure report: $failuresPath"
 }
-Write-Host "Share summary with this command: Get-Content -Path (Join-Path '$runDir' 'selection-stats.txt'); Get-Content -Path (Join-Path '$runDir' 'cache-stats.txt'); if (Test-Path (Join-Path '$runDir' 'failures.csv')) { Import-Csv (Join-Path '$runDir' 'failures.csv') | Group-Object ExceptionType | Sort-Object Count -Descending | Select-Object -First 10 }"
 Write-Host "Done. Candidates moved to: $archiveDir"
 '''
