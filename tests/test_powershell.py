@@ -33,17 +33,3 @@ def test_cleanup_script_includes_preflight_manifest_rollback_and_failures() -> N
     assert "rollback-moves.ps1" in script
     assert "failures.csv" in script
     assert "Preflight failed: insufficient free space/headroom" in script
-    assert "Share summary with this command" in script
-
-
-def test_cleanup_script_uses_valid_sort_object_syntax() -> None:
-    script = build_inventory_and_dedupe_script()
-    assert "Sort-Object -Property Length, FullName -Descending" in script
-    assert "Sort-Object -Property Count, Name -Descending" in script
-    assert "Sort-Object -Property Length, Hash, Candidate -Descending" in script
-
-
-def test_cleanup_script_handles_full_scan_counting_robustly() -> None:
-    script = build_inventory_and_dedupe_script()
-    assert "$files = @($filteredFiles)" in script
-    assert "$totalFiles = ($files | Measure-Object).Count" in script

@@ -1,4 +1,4 @@
-from __future__ import annotations
+﻿from __future__ import annotations
 
 
 def build_inventory_and_dedupe_script() -> str:
@@ -272,12 +272,12 @@ foreach ($f in $rawFiles) {
   $filteredFiles.Add($f)
 }
 
-$files = @($filteredFiles)
+$files = $filteredFiles
 if ($MaxFiles -gt 0) {
-  $files = @($files | Select-Object -First $MaxFiles)
+  $files = $files | Select-Object -First $MaxFiles
 }
 
-$totalFiles = ($files | Measure-Object).Count
+$totalFiles = @($files).Count
 $selectionStats.Selected = $totalFiles
 Write-Host "==> Files selected: $totalFiles"
 
@@ -663,6 +663,6 @@ Write-Host "Preflight report: $preflightPath"
 if ($failureRows.Count -gt 0) {
   Write-Host "Failure report: $failuresPath"
 }
-Write-Host "Share summary with this command: Get-Content -Path (Join-Path '$runDir' 'selection-stats.txt'); Get-Content -Path (Join-Path '$runDir' 'cache-stats.txt'); if (Test-Path (Join-Path '$runDir' 'failures.csv')) { Import-Csv (Join-Path '$runDir' 'failures.csv') | Group-Object ExceptionType | Sort-Object Count -Descending | Select-Object -First 10 }"
 Write-Host "Done. Candidates moved to: $archiveDir"
 '''
+
