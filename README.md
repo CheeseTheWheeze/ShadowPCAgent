@@ -190,3 +190,10 @@ git add .
 git commit -m "Your message"
 git push -u origin <your-branch>
 ```
+
+### Local coding-agent setup (Windows)
+
+If you want a local codex-adjacent workflow (Ollama + Aider) and a helper that syncs your repo to latest `origin/main`, see:
+
+- `docs/local-codex-adjacent-setup.md`
+- `scripts/update-main-and-setup-local-agent.ps1`

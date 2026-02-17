@@ -272,12 +272,12 @@ foreach ($f in $rawFiles) {
   $filteredFiles.Add($f)
 }
 
-$files = $filteredFiles
+$files = @($filteredFiles)
 if ($MaxFiles -gt 0) {
-  $files = $files | Select-Object -First $MaxFiles
+  $files = @($files | Select-Object -First $MaxFiles)
 }
 
-$totalFiles = @($files).Count
+$totalFiles = $files.Count
 $selectionStats.Selected = $totalFiles
 Write-Host "==> Files selected: $totalFiles"
 
@@ -665,4 +665,3 @@ if ($failureRows.Count -gt 0) {
 }
 Write-Host "Done. Candidates moved to: $archiveDir"
 '''
-

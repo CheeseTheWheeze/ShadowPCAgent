@@ -33,3 +33,10 @@ def test_cleanup_script_includes_preflight_manifest_rollback_and_failures() -> N
     assert "rollback-moves.ps1" in script
     assert "failures.csv" in script
     assert "Preflight failed: insufficient free space/headroom" in script
+
+
+def test_cleanup_script_normalizes_selected_files_to_array_for_counting() -> None:
+    script = build_inventory_and_dedupe_script()
+    assert "$files = @($filteredFiles)" in script
+    assert "$files = @($files | Select-Object -First $MaxFiles)" in script
+    assert "$totalFiles = $files.Count" in script
