@@ -5,3 +5,8 @@ __pycache__/
 dist/
 build/
 .shadowpcagent/
+AGENTS.md
+data/
+data/*.sqlite
+data/*.db
+*.egg-info/
