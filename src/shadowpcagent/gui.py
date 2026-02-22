@@ -215,8 +215,11 @@ def start_gui() -> None:
         t = threading.Thread(target=fn, daemon=True)
         t.start()
 
-    def _log(line: str) -> None:
-        root.after(0, lambda: _append_text(log_box, line))
+        p2 = subprocess.run(["git", "apply", str(patch_path)], cwd=target_var.get(), text=True, capture_output=True)
+        if p2.returncode != 0:
+            _chat("Shadow", "Patch apply failed.")
+            _log(f"[GIT APPLY FAILED]\n{p2.stderr or ''}{p2.stdout or ''}\n")
+            return
 
     def _activity(line: str) -> None:
         root.after(0, lambda: _append_text(activity_feed, line))
@@ -302,14 +305,15 @@ def start_gui() -> None:
     def do_propose_patch():
         global LAST_PATCH_PATH
 
-        prompt = prompt_box.get("1.0", "end-1c").strip()
-        if not prompt:
-            _log("Prompt is empty.\n")
+        if any(k in lowered for k in ["scan", "analyze machine", "optimize hardware", "analyze computer"]):
+            add_auto_task("System analysis", user_text, "Scan")
+            run_in_thread(lambda: perform_system_scan(Path(target_var.get())))
             return
 
-        model = model_entry.get().strip() or DEFAULT_MODEL
-        patch_path = workflow_dir / "PATCH_GUI.diff"
-        stderr_path = workflow_dir / "CODEX_GUI.stderr.txt"
+        if any(k in lowered for k in ["apply patch", "apply changes"]):
+            add_auto_task("Apply prepared patch", user_text, "Code")
+            run_in_thread(apply_patch)
+            return
 
         def worker():
             _set_status("Planning code changes...")
@@ -379,7 +383,90 @@ def start_gui() -> None:
             _set_status("No patch to apply")
             return
 
-        patch_path = Path(LAST_PATCH_PATH)
+        if lowered.startswith("run "):
+            raw = user_text[4:].strip()
+            pieces = raw.split(" ", 1)
+            cmd = pieces[0]
+            args = pieces[1] if len(pieces) > 1 else ""
+            add_auto_task("Run command", user_text, "Command")
+            run_in_thread(lambda: run_cli_command(cmd, args))
+            return
+
+        add_auto_task("General request", user_text, "General")
+        _chat(
+            "Shadow",
+            "I understood your request and added it to the intelligent queue. "
+            "If you want action now, start with 'edit ...', 'scan ...', or 'run ...'.",
+        )
+
+    # Layout
+    top = tk.Frame(root, bg=colors["panel"], highlightbackground="#2b3e61", highlightthickness=1)
+    top.pack(fill=tk.X, padx=10, pady=(10, 6))
+
+    tk.Label(top, text="✨ Shadow Chat", bg=colors["panel"], fg=colors["text"], font=("Segoe UI", 16, "bold")).pack(side=tk.LEFT, padx=10, pady=8)
+    tk.Label(top, textvariable=status_var, bg=colors["panel"], fg=colors["sub"]).pack(side=tk.LEFT, padx=8)
+
+    overlay_mode = tk.BooleanVar(value=False)
+    tk.Button(
+        top,
+        text="Toggle Overlay",
+        command=lambda: (overlay_mode.set(not overlay_mode.get()), set_overlay(overlay_mode.get())),
+        bg=colors["soft"],
+        fg=colors["text"],
+        relief=tk.FLAT,
+        padx=10,
+    ).pack(side=tk.RIGHT, padx=8)
+
+    tk.Button(top, text="Tasks", command=open_task_popup, bg=colors["soft"], fg=colors["text"], relief=tk.FLAT).pack(side=tk.RIGHT, padx=8)
+
+    target_row = tk.Frame(root, bg=colors["bg"])
+    target_row.pack(fill=tk.X, padx=10, pady=(0, 6))
+    tk.Label(target_row, text="Target Folder:", bg=colors["bg"], fg=colors["text"]).pack(side=tk.LEFT)
+    tk.Entry(target_row, textvariable=target_var, width=100).pack(side=tk.LEFT, padx=8, fill=tk.X, expand=True)
+
+    center = tk.Frame(root, bg=colors["bg"])
+    center.pack(fill=tk.BOTH, expand=True, padx=10)
+
+    chat_box = scrolledtext.ScrolledText(center, wrap=tk.WORD, bg="#0d1420", fg=colors["text"], relief=tk.FLAT, state=tk.DISABLED)
+    chat_box.pack(fill=tk.BOTH, expand=True)
+
+    input_row = tk.Frame(root, bg=colors["bg"])
+    input_row.pack(fill=tk.X, padx=10, pady=8)
+
+    input_box = scrolledtext.ScrolledText(input_row, height=4, wrap=tk.WORD, bg="#0d1420", fg=colors["text"], relief=tk.FLAT)
+    input_box.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+
+    tk.Button(input_row, text="Send", command=process_chat, bg=colors["accent"], fg="#0f1f1a", relief=tk.FLAT, padx=14).pack(side=tk.LEFT, padx=8)
+
+    tools = tk.LabelFrame(root, text="Power Tools", bg=colors["panel"], fg=colors["text"], labelanchor="nw")
+    tools.pack(fill=tk.BOTH, padx=10, pady=(0, 10))
+
+    mini_top = tk.Frame(tools, bg=colors["panel"])
+    mini_top.pack(fill=tk.X, padx=8, pady=(6, 4))
+    tk.Label(mini_top, text="Model", bg=colors["panel"], fg=colors["text"]).pack(side=tk.LEFT)
+    model_entry = tk.Entry(mini_top, width=44)
+    model_entry.insert(0, DEFAULT_MODEL)
+    model_entry.pack(side=tk.LEFT, padx=6)
+
+    tk.Button(mini_top, text="Propose from chat", command=lambda: run_in_thread(lambda: propose_patch_from_chat(chat_memory[-1]["content"] if chat_memory else "")), bg=colors["soft"], fg=colors["text"], relief=tk.FLAT).pack(side=tk.LEFT, padx=4)
+    tk.Button(mini_top, text="Apply patch", command=lambda: run_in_thread(apply_patch), bg=colors["soft"], fg=colors["text"], relief=tk.FLAT).pack(side=tk.LEFT, padx=4)
+    tk.Button(mini_top, text="Scan now", command=lambda: run_in_thread(lambda: perform_system_scan(Path(target_var.get()))), bg=colors["warn"], fg="#1a1a1a", relief=tk.FLAT).pack(side=tk.RIGHT, padx=4)
+
+    task_list = tk.Listbox(tools, height=4, bg="#0d1420", fg=colors["text"], selectbackground=colors["soft"], relief=tk.FLAT)
+    task_list.pack(fill=tk.X, padx=8, pady=4)
+
+    archived_list = tk.Listbox(tools, height=3, bg="#0d1420", fg=colors["sub"], selectbackground=colors["soft"], relief=tk.FLAT)
+    archived_list.pack(fill=tk.X, padx=8, pady=4)
+
+    tk.Button(tools, text="Archive selected task", command=archive_selected_task, bg=colors["soft"], fg=colors["text"], relief=tk.FLAT).pack(anchor="w", padx=8, pady=(0, 6))
+
+    tk.Label(tools, text="Patch Diff Preview", bg=colors["panel"], fg=colors["text"]).pack(anchor="w", padx=8)
+    diff_box = scrolledtext.ScrolledText(tools, height=8, wrap=tk.NONE, bg="#0d1420", fg=colors["text"], relief=tk.FLAT)
+    diff_box.pack(fill=tk.BOTH, expand=True, padx=8, pady=(2, 8))
+
+    tk.Label(tools, text="Logs", bg=colors["panel"], fg=colors["text"]).pack(anchor="w", padx=8)
+    log_box = scrolledtext.ScrolledText(tools, height=6, wrap=tk.NONE, bg="#0d1420", fg=colors["text"], relief=tk.FLAT, state=tk.DISABLED)
+    log_box.pack(fill=tk.BOTH, expand=True, padx=8, pady=(2, 8))
 
         def worker():
             _set_status("Applying patch...")
@@ -438,6 +525,7 @@ def start_gui() -> None:
     apply_btn.config(command=do_apply_patch)
     scan_btn.config(command=run_system_scan)
 
+    root.bind("<Control-Return>", lambda _e: process_chat())
     root.mainloop()
 
 
