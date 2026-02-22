@@ -100,10 +100,6 @@ python -m shadowpcagent "Summarize the repo status"
 Use the included launcher script (works even without editable install by setting `PYTHONPATH` to `src`):
 
 ```powershell
-# preferred from repo root:
-.\Launch-ShadowOverlay.ps1
-
-# or explicit path:
 powershell -ExecutionPolicy Bypass -File .\scripts\Launch-ShadowOverlay.ps1
 ```
 
@@ -115,9 +111,6 @@ powershell -ExecutionPolicy Bypass -File .\scripts\Launch-ShadowOverlay.ps1 -Use
 
 # include dev dependencies
 powershell -ExecutionPolicy Bypass -File .\scripts\Launch-ShadowOverlay.ps1 -UseVenv -Install -Dev
-
-# fallback alias if dash copy/paste gets mangled in your shell/font:
-.\LaunchShadowOverlay.ps1 -UseVenv -Install
 ```
 
 
