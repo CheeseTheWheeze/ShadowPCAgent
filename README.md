@@ -95,6 +95,31 @@ Get-ChildItem
 python -m pip install -e .[dev]
 python -m shadowpcagent "Summarize the repo status"
 ```
+### Launch the GUI overlay (PowerShell)
+
+Use the included launcher script (works even without editable install by setting `PYTHONPATH` to `src`):
+
+```powershell
+# preferred from repo root:
+.\Launch-ShadowOverlay.ps1
+
+# or explicit path:
+powershell -ExecutionPolicy Bypass -File .\scripts\Launch-ShadowOverlay.ps1
+```
+
+Optional flags:
+
+```powershell
+# auto-create/use .venv and install dependencies first
+powershell -ExecutionPolicy Bypass -File .\scripts\Launch-ShadowOverlay.ps1 -UseVenv -Install
+
+# include dev dependencies
+powershell -ExecutionPolicy Bypass -File .\scripts\Launch-ShadowOverlay.ps1 -UseVenv -Install -Dev
+
+# fallback alias if dash copy/paste gets mangled in your shell/font:
+.\LaunchShadowOverlay.ps1 -UseVenv -Install
+```
+
 
 ### Run tests (from the repo root)
 
