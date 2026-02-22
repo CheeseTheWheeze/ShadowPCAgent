@@ -224,8 +224,9 @@ def start_gui() -> None:
     def _activity(line: str) -> None:
         root.after(0, lambda: _append_text(activity_feed, line))
 
-    def _set_status(text: str) -> None:
-        root.after(0, lambda: status_var.set(text))
+        _chat("Shadow", f"Patch applied: {patch_path.name}")
+        _log("[GIT] Patch applied successfully\n")
+        _set_status("Patch applied")
 
     def _set_diff(text: str) -> None:
         def _do():
